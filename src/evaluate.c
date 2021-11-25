@@ -3669,6 +3669,7 @@ static int rule_evaluate(struct eval_ctx *ctx, struct rule *rule,
 	return 0;
 }
 
+//确定不同family对应的hook点编号
 static uint32_t str2hooknum(uint32_t family, const char *hook)
 {
 	if (!hook)
@@ -3889,6 +3890,7 @@ static int cmd_evaluate_add(struct eval_ctx *ctx, struct cmd *cmd)
 	case CMD_OBJ_CHAIN:
 		return chain_evaluate(ctx, cmd->chain);
 	case CMD_OBJ_TABLE:
+	    //执行table添加
 		return table_evaluate(ctx, cmd->table);
 	case CMD_OBJ_FLOWTABLE:
 		handle_merge(&cmd->flowtable->handle, &cmd->handle);

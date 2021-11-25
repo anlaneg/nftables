@@ -183,7 +183,8 @@ static int json_unpack_stmt(struct json_ctx *ctx, json_t *root,
 	return 1;
 }
 
-static int parse_family(const char *name, uint32_t *family)
+//获取family对应的编号
+static int parse_family(const char *name/*协议族名称*/, uint32_t *family/*协议族编号*/)
 {
 	unsigned int i;
 	struct {
@@ -200,6 +201,7 @@ static int parse_family(const char *name, uint32_t *family)
 
 	assert(family);
 
+	//按名称匹配，确定family的编号
 	for (i = 0; i < array_size(family_tbl); i++) {
 		if (strcmp(name, family_tbl[i].name))
 			continue;
@@ -2526,6 +2528,7 @@ static struct stmt *json_parse_stmt(struct json_ctx *ctx, json_t *root)
 	return NULL;
 }
 
+//添加表
 static struct cmd *json_parse_cmd_add_table(struct json_ctx *ctx, json_t *root,
 					    enum cmd_ops op, enum cmd_obj obj)
 {
@@ -2546,6 +2549,8 @@ static struct cmd *json_parse_cmd_add_table(struct json_ctx *ctx, json_t *root,
 		json_error(ctx, "Either name or handle required to delete a table.");
 		return NULL;
 	}
+
+	//取family编号
 	if (parse_family(family, &h.family)) {
 		json_error(ctx, "Unknown family '%s'.", family);
 		return NULL;
@@ -3273,6 +3278,7 @@ static struct cmd *json_parse_cmd_add_object(struct json_ctx *ctx,
 	return cmd_alloc(op, cmd_obj, &h, int_loc, obj);
 }
 
+//json添加命令执行
 static struct cmd *json_parse_cmd_add(struct json_ctx *ctx,
 				      json_t *root, enum cmd_ops op)
 {
@@ -3611,9 +3617,11 @@ static struct cmd *json_parse_cmd(struct json_ctx *ctx, json_t *root)
 	unsigned int i;
 	json_t *tmp;
 
+	//遍历cb表，检查是否与cb对应的key相等，如果相等，则调用其对应的cb
 	for (i = 0; i < array_size(parse_cb_table); i++) {
 		tmp = json_object_get(root, parse_cb_table[i].key);
 		if (!tmp)
+		    /*不包启key对应的对象，跳过*/
 			continue;
 
 		return parse_cb_table[i].cb(ctx, tmp, parse_cb_table[i].op);
@@ -3626,9 +3634,11 @@ static int json_verify_metainfo(struct json_ctx *ctx, json_t *root)
 {
 	int schema_version;
 
+	//将其成员转换为int类型
 	if (!json_unpack(root, "{s:i}", "json_schema_version", &schema_version))
 			return 0;
 
+	//版本不能大于当前版本
 	if (schema_version > JSON_SCHEMA_VERSION) {
 		json_error(ctx, "Schema version %d not supported, maximum supported version is %d\n",
 			   schema_version, JSON_SCHEMA_VERSION);
@@ -3687,22 +3697,26 @@ static int __json_parse(struct json_ctx *ctx)
 			    "{s:o}", "nftables", &tmp))
 		return -1;
 
+	//tmp必须为数组类型
 	if (!json_is_array(tmp)) {
 		json_error(ctx, "Value of property \"nftables\" must be an array.");
 		return -1;
 	}
 
+	//遍历每个数组成员
 	json_array_foreach(tmp, index, value) {
 		/* this is more or less from parser_bison.y:716 */
 		LIST_HEAD(list);
 		struct cmd *cmd;
 		json_t *tmp2;
 
+		//每个数组成员必须为object类型
 		if (!json_is_object(value)) {
 			json_error(ctx, "Unexpected command array element of type %s, expected object.", json_typename(value));
 			return -1;
 		}
 
+		//取value中的成员metainfo
 		tmp2 = json_object_get(value, "metainfo");
 		if (tmp2) {
 			if (json_verify_metainfo(ctx, tmp2)) {
@@ -3712,6 +3726,7 @@ static int __json_parse(struct json_ctx *ctx)
 			continue;
 		}
 
+		//解析cmd
 		cmd = json_parse_cmd(ctx, value);
 
 		if (!cmd) {
@@ -3719,6 +3734,7 @@ static int __json_parse(struct json_ctx *ctx)
 			return -1;
 		}
 
+		//将解析出来的cmd加入到list
 		list_add_tail(&cmd->list, &list);
 
 		list_splice_tail(&list, ctx->cmds);
@@ -3730,8 +3746,9 @@ static int __json_parse(struct json_ctx *ctx)
 	return 0;
 }
 
-int nft_parse_json_buffer(struct nft_ctx *nft, const char *buf,
-			  struct list_head *msgs, struct list_head *cmds)
+/*采用json格式解释用户输入*/
+int nft_parse_json_buffer(struct nft_ctx *nft, const char *buf/*用户输入的内容*/,
+			  struct list_head *msgs, struct list_head *cmds/*出参，解析获得的cmd*/)
 {
 	struct json_ctx ctx = {
 		.indesc = {
@@ -3744,6 +3761,7 @@ int nft_parse_json_buffer(struct nft_ctx *nft, const char *buf,
 	};
 	int ret;
 
+	//加载并解析json串
 	nft->json_root = json_loads(buf, 0, NULL);
 	if (!nft->json_root)
 		return -EINVAL;

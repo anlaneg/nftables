@@ -363,6 +363,7 @@ static const struct input_descriptor indesc_cmdline = {
 	.name	= "<cmdline>",
 };
 
+//采用bison方式解释用户输入
 static int nft_parse_bison_buffer(struct nft_ctx *nft, const char *buf,
 				  struct list_head *msgs, struct list_head *cmds)
 {
@@ -396,6 +397,7 @@ static int nft_parse_bison_filename(struct nft_ctx *nft, const char *filename,
 	return 0;
 }
 
+//执行解析得到的cmds
 static int nft_evaluate(struct nft_ctx *nft, struct list_head *msgs,
 			struct list_head *cmds)
 {
@@ -406,11 +408,13 @@ static int nft_evaluate(struct nft_ctx *nft, struct list_head *msgs,
 	if (cache_update(nft, flags, msgs) < 0)
 		return -1;
 
+	//遍历每个cmds,逐个进行执行
 	list_for_each_entry(cmd, cmds, list) {
 		struct eval_ctx ectx = {
 			.nft	= nft,
 			.msgs	= msgs,
 		};
+		//执行命令
 		if (cmd_evaluate(&ectx, cmd) < 0 &&
 		    ++nft->state->nerrs == nft->parser_max_errors)
 			return -1;
@@ -426,7 +430,7 @@ static int nft_evaluate(struct nft_ctx *nft, struct list_head *msgs,
 }
 
 EXPORT_SYMBOL(nft_run_cmd_from_buffer);
-int nft_run_cmd_from_buffer(struct nft_ctx *nft, const char *buf)
+int nft_run_cmd_from_buffer(struct nft_ctx *nft, const char *buf/*用户输入*/)
 {
 	int rc = -EINVAL, parser_rc;
 	struct cmd *cmd, *next;
@@ -437,6 +441,7 @@ int nft_run_cmd_from_buffer(struct nft_ctx *nft, const char *buf)
 	nlbuf = xzalloc(strlen(buf) + 2);
 	sprintf(nlbuf, "%s\n", buf);
 
+	//按格式解释用户输入
 	if (nft_output_json(&nft->output))
 		rc = nft_parse_json_buffer(nft, nlbuf, &msgs, &cmds);
 	if (rc == -EINVAL)

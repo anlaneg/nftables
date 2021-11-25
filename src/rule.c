@@ -935,6 +935,7 @@ const char *family2str(unsigned int family)
 	return "unknown";
 }
 
+//由hooknum获得hook点名称
 const char *hooknum2str(unsigned int family, unsigned int hooknum)
 {
 	switch (family) {
@@ -1217,6 +1218,7 @@ void chain_print_plain(const struct chain *chain, struct output_ctx *octx)
 		nft_print(octx, " # handle %" PRIu64, chain->handle.handle.id);
 }
 
+//申请table对象
 struct table *table_alloc(void)
 {
 	struct table *table;
@@ -1361,6 +1363,7 @@ static void table_print(const struct table *table, struct output_ctx *octx)
 	nft_print(octx, "}\n");
 }
 
+//申请cmd
 struct cmd *cmd_alloc(enum cmd_ops op, enum cmd_obj obj,
 		      const struct handle *h, const struct location *loc,
 		      void *data)

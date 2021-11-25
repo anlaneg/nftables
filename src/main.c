@@ -279,6 +279,7 @@ int main(int argc, char * const *argv)
 			filename = optarg;
 			break;
 		case OPT_INTERACTIVE:
+		    //指明采用交互方式进行配置
 			interactive = true;
 			break;
 		case OPT_INCLUDEPATH:
@@ -385,6 +386,7 @@ int main(int argc, char * const *argv)
 	} else if (filename != NULL) {
 		rc = !!nft_run_cmd_from_filename(nft, filename);
 	} else if (interactive) {
+	    /*交互方式处理*/
 		if (cli_init(nft) < 0) {
 			fprintf(stderr, "%s: interactive CLI not supported in this build\n",
 				argv[0]);

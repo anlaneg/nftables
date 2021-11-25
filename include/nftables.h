@@ -121,7 +121,7 @@ struct nft_ctx {
 	struct parser_state	*state;
 	void			*scanner;
 	struct scope		*top_scope;
-	void			*json_root;
+	void			*json_root;/*json串根节点*/
 };
 
 enum nftables_exit_codes {

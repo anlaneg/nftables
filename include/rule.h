@@ -210,8 +210,8 @@ struct chain {
 	struct location		location;
 	unsigned int		refcnt;
 	uint32_t		flags;
-	const char		*hookstr;
-	unsigned int		hooknum;
+	const char		*hookstr;//hook点名称
+	unsigned int		hooknum;//hook点编号
 	struct prio_spec	priority;
 	struct expr		*policy;
 	const char		*type;
